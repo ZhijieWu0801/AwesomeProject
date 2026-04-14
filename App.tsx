@@ -6,13 +6,11 @@ import AboutMe from './Screen/AboutMe';
 import { Button, View } from 'react-native';
 
 export type RootStackParamList = {
-  App:undefined;
   Home: undefined;
   About: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-type Props = NativeStackScreenProps<RootStackParamList, 'App'>;
 
 function App() {
   return (
