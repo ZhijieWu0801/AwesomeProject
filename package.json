@@ -19,6 +19,7 @@
     "react-native": "0.85.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
+    "react-native-select-multiple": "^2.1.0",
     "react-native-storage": "^1.0.1",
     "realm": "^20.2.0"
   },

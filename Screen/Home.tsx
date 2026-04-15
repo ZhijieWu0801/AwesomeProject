@@ -1,49 +1,102 @@
 import React, { useState } from 'react';
-import { Button, StyleSheet,  TextInput, View } from 'react-native';
+import { Button, StyleSheet, Text, Switch, TextInput, View, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import realm from '../storage/realm';
-
+import { ExtendsUndefined } from '@sinclair/typebox';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 function Home({ navigation }: Props) {
   const [name, setName] = useState('');
+  const [list, setList] = useState([])
   const handleChange = (text: string) => {
     setName(text);
-    const line = realm.objects('List').filter((obj)=>obj.id === 0)[0]
-    // console.log(text,line);
-    if(line){
-      realm.write(() => {
-        line.state = !line.state
-        line.value = text
-      })
-    } else {
-      realm.write(() => {
-        realm.create('List', {
-          id: 0,
-          state: false,
-          value: text,
-        })
-      })
-    }
   }
-  const getName = async () => {
-    // setName(await AsyncStorage.getItem('name'));
-    const line = realm.objects('List').filter((obj)=>obj.id === 0)[0]
-    console.log({ ...line });
-    setName(line.value)
+  // 新增一条前端数据
+  const addLine = ()=>{
+    const allLine = realm.objects('List')
+    if(!name) return
+    realm.write(() => {
+      realm.create('List', {
+        id: (allLine.length || 0) + 1,
+        state: false,
+        value: name,
+      })
+      setName('')
+      getList()
+    })
+  }
+  // 获取数据从数据库
+  const getList = ()=>{
+    const allLine = realm.objects('List');
+      setList(JSON.parse(JSON.stringify(allLine)) || [])
+
+  }
+  // 开关的变化事件
+  const handCheckValueChange = (e:Boolean,item:Object)=>{
+    const newList = list.map(i=>{
+      if(i.id === item.id){
+        i.state = e
+      }
+      return i
+    })
+    setList(newList)
+  }
+  // 同步新增数据到数据库
+  const updateDB = ()=>{
+    realm.write(() => {
+      list.forEach(i=>{
+        realm.create('List', {
+          id: i.id,
+          state: i.state,
+          value: i.value,
+        },true)
+      })
+    })
+  }
+  const handleOldChange = (item:Object,text:string)=>{
+    item.value = text
+    setList([...list])
+  }
+  //删除按钮点击事件
+  const handleDelete = (item:Object)=>{
+    const List = realm.objects('List');
+    realm.write(() => {
+      // 根据 id 查找对应的 Realm 对象
+      const itemToDelete = List.filtered(`id == ${item.id}`)[0];
+      if (itemToDelete) {
+        realm.delete(itemToDelete);
+      }
+    })
+    getList()
   }
 
   return (
-    <View style={styles.container}>
-      <View>
-        <TextInput onChangeText={handleChange} value={name} />
-        {/*<Button onPress={() => AsyncStorage.setItem('name', name)} title='添加'></Button>*/}
-        <Button onPress={getName} title='获取'></Button>
-        <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
-        <Button title="Go to About" onPress={() => navigation.navigate('About')} />
+    <>
+      <ScrollView>
+        <View style={styles.container}>
+            {list.map((item, index) => (
+              <View key={index} style={styles.ListContainer}>
+                  <Switch value={item.state} onValueChange={(e)=>{
+                    handCheckValueChange(e,item)
+                  }}/>
+                  <TextInput onChangeText={(text)=>handleOldChange(item,text)} style={styles.Input} value={item.value}/>
+                  <Button title='删除' onPress={()=>handleDelete(item)}/>
+              </View>
+          ))}
+        </View>
+      </ScrollView>
+      <View style={styles.bottomContainer}>
+           <TextInput onChangeText={handleChange} value={name} style={styles.newInput} />
+        <View style={styles.ButtonContainer}>
+          <Button onPress={addLine} title='添加' />
+          <Button onPress={getList} title='获取' />
+          <Button onPress={updateDB} title='更新数据库' />
+          {/*<Button title="Go to Home" onPress={() => navigation.navigate('Home')} />*/}
+          {/*<Button title="Go to About" onPress={() => navigation.navigate('About')} />*/}
+        </View>
       </View>
-    </View>
+    </>
   );
 }
 
@@ -53,11 +106,50 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 12,
+    padding: 12,
   },
   title: {
     fontSize: 24,
     fontWeight: '600',
   },
+  ListContainer:{
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 12,
+  },
+  Input:{
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 8,
+    padding: 12,
+    flex: 1,
+  },
+  newInput:{
+    borderWidth: 1,
+    borderColor: 'black',
+    borderRadius: 8,
+    padding: 12,
+    width: 250,
+  },
+  ButtonContainer:{
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bottomContainer:{
+    marginTop:10,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  Button:{
+    width: 120,
+    height: 40,
+  }
 });
 
 export default Home;
