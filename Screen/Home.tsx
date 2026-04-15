@@ -3,12 +3,15 @@ import { Button, StyleSheet, Text, Switch, TextInput, View, ScrollView } from 'r
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import realm from '../storage/realm';
-import { ExtendsUndefined } from '@sinclair/typebox';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
-
+type ListItem = {
+  id: number;
+  value: string;
+  state: boolean;
+}
 function Home({ navigation }: Props) {
   const [name, setName] = useState('');
-  const [list, setList] = useState([])
+  const [list, setList] = useState<ListItem[]>([])
   const handleChange = (text: string) => {
     setName(text);
   }
@@ -33,8 +36,8 @@ function Home({ navigation }: Props) {
 
   }
   // 开关的变化事件
-  const handCheckValueChange = (e:Boolean,item:Object)=>{
-    const newList = list.map(i=>{
+  const handCheckValueChange = (e:boolean,item:ListItem)=>{
+    const newList = list.map((i:ListItem)=>{
       if(i.id === item.id){
         i.state = e
       }
@@ -54,16 +57,16 @@ function Home({ navigation }: Props) {
       })
     })
   }
-  const handleOldChange = (item:Object,text:string)=>{
+  const handleOldChange = (item:ListItem,text:string)=>{
     item.value = text
     setList([...list])
   }
   //删除按钮点击事件
-  const handleDelete = (item:Object)=>{
+  const handleDelete = (item:ListItem)=>{
     const List = realm.objects('List');
     realm.write(() => {
       // 根据 id 查找对应的 Realm 对象
-      const itemToDelete = List.filtered(`id == ${item.id}`)[0];
+      const itemToDelete =  List.filtered(`id == ${item.id}`)[0];
       if (itemToDelete) {
         realm.delete(itemToDelete);
       }
