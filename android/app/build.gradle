@@ -91,7 +91,7 @@ android {
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
-        },
+        }
         // todo生成签名
         release {
             storeFile file('')
