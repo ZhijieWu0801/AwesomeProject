@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, StyleSheet, Text, Switch, TextInput, View, ScrollView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
@@ -8,6 +8,11 @@ type ListItem = {
   id: number;
   value: string;
   state: boolean;
+}
+type ItemState = '"finish"|"todo"'
+const StateMap = {
+  finish:'finish',
+  todo:'todo',
 }
 function Home({ navigation }: Props) {
   const [name, setName] = useState('');
@@ -73,7 +78,19 @@ function Home({ navigation }: Props) {
     })
     getList()
   }
-
+  // const handleSetFinish = (item:ListItem)=>{
+  //   const List = realm.objects('List');
+  //   realm.write(() => {
+  //     const itemToUpdate =  List.filtered(`id == ${item.id}`)[0];
+  //     if (itemToUpdate) {
+  //       itemToUpdate.finish = !itemToUpdate.finish;
+  //     }
+  //     getList()
+  //   })
+  // }
+  useEffect(()=>{
+    getList()
+  },[])
   return (
     <>
       <ScrollView>
@@ -83,8 +100,9 @@ function Home({ navigation }: Props) {
                   <Switch value={item.state} onValueChange={(e)=>{
                     handCheckValueChange(e,item)
                   }}/>
-                  <TextInput onChangeText={(text)=>handleOldChange(item,text)} style={styles.Input} value={item.value}/>
+                  <TextInput onChangeText={(text)=>handleOldChange(item,text)} style={[styles.Input,item.state ? styles.itemFinish : styles.itemTodo]} value={item.value}/>
                   <Button title='删除' onPress={()=>handleDelete(item)}/>
+                {/*{item.finish ? <Button title='未完成' onPress={()=>handleSetFinish(item)}/> : <Button title='完成' onPress={()=>handleSetFinish(item)}/>}*/}
               </View>
           ))}
         </View>
@@ -152,6 +170,12 @@ const styles = StyleSheet.create({
   Button:{
     width: 120,
     height: 40,
+  },
+  itemTodo:{
+
+  },
+  itemFinish:{
+    backgroundColor:'#008C8C80'
   }
 });
 
